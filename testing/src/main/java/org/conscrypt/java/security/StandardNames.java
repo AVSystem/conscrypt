@@ -241,6 +241,7 @@ public final class StandardNames {
         // Pre-Shared Key (PSK) cipher suites
         addOpenSsl("TLS_PSK_WITH_AES_128_CBC_SHA");
         addOpenSsl("TLS_PSK_WITH_AES_256_CBC_SHA");
+        addOpenSsl("TLS_PSK_WITH_AES_128_CBC_SHA256");
         addOpenSsl("TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA");
         addOpenSsl("TLS_ECDHE_PSK_WITH_AES_256_CBC_SHA");
         addOpenSsl("TLS_ECDHE_PSK_WITH_CHACHA20_POLY1305_SHA256");
@@ -338,7 +339,9 @@ public final class StandardNames {
             "TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA",
             "TLS_ECDHE_PSK_WITH_AES_256_CBC_SHA",
             "TLS_PSK_WITH_AES_128_CBC_SHA",
-            "TLS_PSK_WITH_AES_256_CBC_SHA");
+            "TLS_PSK_WITH_AES_256_CBC_SHA",
+            "TLS_PSK_WITH_AES_128_CBC_SHA256"
+    );
 
     // Should be updated to match BoringSSL's defaults when they change.
     // https://boringssl.googlesource.com/boringssl/+/master/ssl/t1_lib.cc#289

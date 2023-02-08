@@ -904,6 +904,7 @@ public final class NativeCrypto {
             "TLS_ECDHE_PSK_WITH_AES_256_CBC_SHA",
             "TLS_PSK_WITH_AES_128_CBC_SHA",
             "TLS_PSK_WITH_AES_256_CBC_SHA",
+            "TLS_PSK_WITH_AES_128_CBC_SHA256",
     };
 
     static String[] getSupportedCipherSuites() {

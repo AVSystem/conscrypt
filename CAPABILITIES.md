@@ -75,6 +75,7 @@ is ignored.
   * `TLS_ECDHE_PSK_WITH_CHACHA20_POLY1305_SHA256`
   * `TLS_PSK_WITH_AES_128_CBC_SHA`
   * `TLS_PSK_WITH_AES_256_CBC_SHA`
+  * `TLS_PSK_WITH_AES_128_CBC_SHA256`
 
 The above cipher suites are supported, but not enabled by default.  TLS 1.3
 cipher suites cannot be customized, so there are no cipher suites that are

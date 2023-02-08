@@ -1,3 +1,10 @@
+AVS fork
+========================================
+
+This fork add additional ciphersuites such as:
+
+* `TLS_PSK_WITH_AES_128_CBC_SHA256`
+
 Conscrypt - A Java Security Provider
 ========================================
 
