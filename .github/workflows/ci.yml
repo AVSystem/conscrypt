@@ -32,6 +32,8 @@ jobs:
 
     runs-on: ${{ matrix.platform }}
 
+    timeout-minutes: 30
+
     steps:
       - name: Set up JDK 11 for toolchains
         uses: actions/setup-java@v1.4.3
@@ -138,19 +140,19 @@ jobs:
 
       - name: Build with Gradle
         shell: bash
-        run: ./gradlew assemble -PcheckErrorQueue
+        run: ./gradlew :conscrypt-openjdk:build -PcheckErrorQueue
 
       - name: Test with Gradle
         shell: bash
-        run: ./gradlew test -PcheckErrorQueue
+        run: ./gradlew :conscrypt-openjdk:test -PcheckErrorQueue
 
       - name: Other checks with Gradle
         shell: bash
-        run: ./gradlew check -PcheckErrorQueue
+        run: ./gradlew :conscrypt-openjdk:check -PcheckErrorQueue
 
       - name: Publish to local Maven repo
         shell: bash
-        run: ./gradlew publishToMavenLocal -Dmaven.repo.local="$M2_REPO"
+        run: ./gradlew :conscrypt-openjdk:publishToMavenLocal -Dmaven.repo.local="$M2_REPO"
 
       - name: Upload Maven respository
         uses: actions/upload-artifact@v1
@@ -178,6 +180,8 @@ jobs:
 
     permissions:
       packages: write
+
+    timeout-minutes: 20
 
     steps:
       - uses: actions/checkout@v2
@@ -252,6 +256,8 @@ jobs:
             suite_class: "org.conscrypt.Conscrypt(OpenJdk)?Suite"
 
     runs-on: ${{ matrix.platform }}
+
+    timeout-minutes: 10
 
     steps:
       - name: Set up Java
