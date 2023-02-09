@@ -265,12 +265,8 @@ jobs:
       fail-fast: false
       matrix:
         platform: [ubuntu-latest, macos-latest]
-        java: [8, 9, 11]
+        java: [11]
         include:
-          - java: 8
-            suite_class: "org.conscrypt.Conscrypt(OpenJdk)?Suite"
-          - java: 9
-            suite_class: "org.conscrypt.Conscrypt(OpenJdk)?Suite"
           - java: 11
             suite_class: "org.conscrypt.Conscrypt(OpenJdk)?Suite"
 
