@@ -160,7 +160,7 @@ artifacts {
 }
 
 apply from: "$rootDir/gradle/publishing.gradle"
-publishing.publications.maven {
+publishing.publications.gpr {
     artifact sourcesJar
     artifact javadocJar
 }
@@ -220,7 +220,7 @@ def addNativeJar(nativeClassifier) {
     jar.dependsOn jarTask
 
     // Add it to the publishing archives list.
-    publishing.publications.maven.artifact jarTask.get()
+    publishing.publications.gpr.artifact jarTask.get()
 }
 
 

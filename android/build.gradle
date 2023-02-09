@@ -159,7 +159,7 @@ if (androidSdkInstalled) {
     }
 
     apply from: "$rootDir/gradle/publishing.gradle"
-    publishing.publications.maven {
+    publishing.publications.gpr {
         from components.android
         artifact sourcesJar.get()
         artifact javadocsJar.get()

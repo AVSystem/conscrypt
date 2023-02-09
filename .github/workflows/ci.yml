@@ -1,11 +1,8 @@
 name: Continuous integration
 
-on:
-  push:
-  pull_request:
-  schedule:
-    # Run every day at midnight UTC
-    - cron: '0 0 * * *'
+push:
+  tags:
+    - '[0-9]+.[0-9]+.[0-9]+-avs\.[0-9]+'
 
 jobs:
   boringssl_clone:
@@ -15,7 +12,7 @@ jobs:
     steps:
       - name: Clone BoringSSL repo
         run: |
-          git clone --depth 1 --filter=blob:none --no-checkout https://github.com/google/boringssl.git "${{ runner.temp }}/boringssl"
+          git clone --depth 1 --filter=blob:none --no-checkout https://github.com/AVSystem/boringssl.git "${{ runner.temp }}/boringssl"
           echo Using BoringSSL commit: $(cd "${{ runner.temp }}/boringssl"; git rev-parse HEAD)
 
       - name: Archive BoringSSL source
@@ -30,14 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ubuntu-latest, macos-latest, windows-latest]
-        include:
-          - platform: ubuntu-latest
-            tools_url: https://dl.google.com/android/repository/sdk-tools-linux-4333796.zip
-          - platform: macos-latest
-            tools_url: https://dl.google.com/android/repository/sdk-tools-darwin-4333796.zip
-          - platform: windows-latest
-            tools_url: https://dl.google.com/android/repository/sdk-tools-windows-4333796.zip
+        platform: [ubuntu-latest, macos-latest]
 
     runs-on: ${{ matrix.platform }}
 
@@ -204,6 +194,9 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    permissions:
+      packages: write
+
     steps:
       - uses: actions/checkout@v2
 
@@ -241,12 +234,6 @@ jobs:
           name: m2repo-macOS
           path: ${{ runner.temp }}/m2
 
-      - name: Download Maven repository for Windows
-        uses: actions/download-artifact@v1
-        with:
-          name: m2repo-Windows
-          path: ${{ runner.temp }}/m2
-
       - name: Build UberJAR with Gradle
         shell: bash
         run: |
@@ -263,13 +250,20 @@ jobs:
           name: m2repo-uber
           path: ${{ runner.temp }}/m2
 
+      - name: Publish UberJAR to GitHubPackages
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ./gradlew :conscrypt-openjdk-uber:publish -Dorg.conscrypt.openjdk.buildUberJar=true -Dmaven.repo.local="$M2_REPO"
+
   openjdk-test:
     needs: uberjar
 
     strategy:
       fail-fast: false
       matrix:
-        platform: [ubuntu-latest, macos-latest, windows-latest]
+        platform: [ubuntu-latest, macos-latest]
         java: [8, 9, 11]
         include:
           - java: 8

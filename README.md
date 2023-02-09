@@ -5,6 +5,9 @@ This fork add additional ciphersuites such as:
 
 * `TLS_PSK_WITH_AES_128_CBC_SHA256`
 
+In addition to this GitHub Actions are modified to publish to GPR
+and uberJar is modified to contain only linux / mac classes.
+
 Conscrypt - A Java Security Provider
 ========================================
 

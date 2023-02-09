@@ -2,8 +2,7 @@ description = 'Conscrypt: OpenJdk UberJAR'
 
 ext {
     buildUberJar = Boolean.parseBoolean(System.getProperty('org.conscrypt.openjdk.buildUberJar', 'false'))
-    uberJarClassifiers = (System.getProperty('org.conscrypt.openjdk.uberJarClassifiers',
-            'osx-x86_64,linux-x86_64,windows-x86,windows-x86_64')).split(',')
+    uberJarClassifiers = (System.getProperty('org.conscrypt.openjdk.uberJarClassifiers', 'osx-x86_64,linux-x86_64')).split(',')
     classesDir = "${buildDir}/classes"
     resourcesDir = "${buildDir}/resources"
     sourcesDir = "${buildDir}/sources"
@@ -86,7 +85,7 @@ if (buildUberJar) {
     }
 
     apply from: "$rootDir/gradle/publishing.gradle"
-    publishing.publications.maven {
+    publishing.publications.gpr {
         artifact sourcesJar
         artifact javadocJar
         artifact jar
