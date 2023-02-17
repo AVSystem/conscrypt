@@ -5,10 +5,12 @@ on:
     tags:
       - '[0-9]+.[0-9]+.[0-9]+-avs\.[0-9]+'
 
+# Note: ubuntu-20.04 is used instead of ubuntu-latest (which is ubuntu-22.04) because it uses older GLIBC version
+
 jobs:
   boringssl_clone:
     # This step ensures that all builders have the same version of BoringSSL
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
       - name: Clone BoringSSL repo
@@ -28,7 +30,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ubuntu-latest, macos-latest]
+        platform: [ubuntu-20.04, macos-latest]
 
     runs-on: ${{ matrix.platform }}
 
@@ -176,7 +178,7 @@ jobs:
   uberjar:
     needs: build
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     permissions:
       packages: write
@@ -249,7 +251,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ubuntu-latest, macos-latest]
+        platform: [ubuntu-20.04, macos-latest]
         java: [11]
         include:
           - java: 11
