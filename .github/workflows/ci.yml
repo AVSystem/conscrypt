@@ -1,14 +1,15 @@
 name: Continuous integration
 
 on:
+  workflow_dispatch:
   push:
     tags:
-      - '[0-9]+.[0-9]+.[0-9]+-avs\.[0-9]+'
+      - '[0-9]+.[0-9]+.[0-9]+-avs.[0-9]+'
 
 jobs:
   boringssl_clone:
     # This step ensures that all builders have the same version of BoringSSL
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Clone BoringSSL repo
@@ -17,10 +18,11 @@ jobs:
           echo Using BoringSSL commit: $(cd "${{ runner.temp }}/boringssl"; git rev-parse HEAD)
 
       - name: Archive BoringSSL source
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: boringssl-source
           path: ${{ runner.temp }}/boringssl
+          include-hidden-files: true
 
   build:
     needs: boringssl_clone
@@ -28,21 +30,43 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ubuntu-latest, macos-latest]
+        platform: [ubuntu-22.04, macos-15-intel]
 
     runs-on: ${{ matrix.platform }}
+    # Build against older GLIBC while using an available GitHub runner.
+    container: ${{ matrix.platform == 'ubuntu-22.04' && 'ubuntu:20.04' || '' }}
+
+    defaults:
+      run:
+        shell: bash
+
+    env:
+      # For compatibility, but 10.15 target requires 16-byte stack alignment.
+      MACOSX_DEPLOYMENT_TARGET: '10.11'
 
     timeout-minutes: 30
 
     steps:
+      - name: Setup Linux environment
+        if: runner.os == 'Linux'
+        run: |
+          dpkg --add-architecture i386
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            ca-certificates git curl unzip clang cmake ninja-build gcc-multilib g++-multilib
+          echo "CC=clang" >> "$GITHUB_ENV"
+          echo "CXX=clang++" >> "$GITHUB_ENV"
+
       - name: Set up JDK 11 for toolchains
-        uses: actions/setup-java@v1.4.3
+        uses: actions/setup-java@v4
         with:
+          distribution: temurin
           java-version: 11
 
       - name: Set up JDK 8 for toolchains
-        uses: actions/setup-java@v1.4.3
+        uses: actions/setup-java@v4
         with:
+          distribution: temurin
           java-version: 8
 
       - name: Set runner-specific environment variables
@@ -51,23 +75,7 @@ jobs:
           echo "BORINGSSL_HOME=${{ runner.temp }}/boringssl" >> $GITHUB_ENV
           echo "M2_REPO=${{ runner.temp }}/m2" >> $GITHUB_ENV
 
-      - uses: actions/checkout@v2
-
-      - name: Setup Linux environment
-        if: runner.os == 'Linux'
-        run: |
-          echo "CC=clang" >> $GITHUB_ENV
-          echo "CXX=clang++" >> $GITHUB_ENV
-
-          sudo dpkg --add-architecture i386
-          sudo add-apt-repository ppa:openjdk-r/ppa
-          sudo apt-get -qq update
-          sudo apt-get -qq install -y --no-install-recommends \
-            gcc-multilib \
-            g++-multilib \
-            ninja-build \
-            openjdk-8-jdk-headless \
-            openjdk-11-jre-headless
+      - uses: actions/checkout@v4
 
       - name: Setup macOS environment
         if: runner.os == 'macOS'
@@ -76,9 +84,10 @@ jobs:
           brew install ninja || echo update failed
 
       - name: install Go
-        uses: actions/setup-go@v1
+        uses: actions/setup-go@v5
         with:
           go-version: '1.19.3'
+          cache: false
 
       - name: Setup Windows environment
         if: runner.os == 'Windows'
@@ -87,7 +96,7 @@ jobs:
           choco install ninja -y
 
       - name: Fetch BoringSSL source
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v4
         with:
           name: boringssl-source
           path: ${{ runner.temp }}/boringssl
@@ -100,9 +109,6 @@ jobs:
 
       - name: Build BoringSSL 64-bit Linux and MacOS
         if: runner.os != 'Windows'
-        env:
-          # For compatibility, but 10.15 target requires 16-byte stack alignment.
-          MACOSX_DEPLOYMENT_TARGET: 10.11
         run: |
           mkdir -p "$BORINGSSL_HOME/build64"
           pushd "$BORINGSSL_HOME/build64"
@@ -152,10 +158,10 @@ jobs:
 
       - name: Publish to local Maven repo
         shell: bash
-        run: ./gradlew :conscrypt-openjdk:publishToMavenLocal -Dmaven.repo.local="$M2_REPO"
+        run: ./gradlew :conscrypt-openjdk:publishToMavenLocal -Dmaven.repo.local="$M2_REPO" -PcheckErrorQueue
 
       - name: Upload Maven respository
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: m2repo-${{ runner.os }}
           path: ${{ runner.temp }}/m2
@@ -167,7 +173,7 @@ jobs:
 
       - name: Upload test JAR with dependencies
         if: runner.os == 'Linux'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: testjar
           path: openjdk/build/libs/conscrypt-openjdk-*-tests.jar
@@ -176,15 +182,22 @@ jobs:
   uberjar:
     needs: build
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     permissions:
+      contents: read
       packages: write
 
     timeout-minutes: 20
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 8 for the legacy Javadoc toolchain
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
 
       - name: Set runner-specific environment variables
         shell: bash
@@ -193,7 +206,7 @@ jobs:
           echo "BORINGSSL_HOME=${{ runner.temp }}/boringssl" >> $GITHUB_ENV
 
       - name: Fetch BoringSSL source
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v4
         with:
           name: boringssl-source
           path: ${{ runner.temp }}/boringssl
@@ -209,13 +222,13 @@ jobs:
           mkdir -p "${{ runner.temp }}/boringssl/include"
 
       - name: Download Maven repository for Linux
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v4
         with:
           name: m2repo-Linux
           path: ${{ runner.temp }}/m2
 
       - name: Download Maven repository for MacOS
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v4
         with:
           name: m2repo-macOS
           path: ${{ runner.temp }}/m2
@@ -231,12 +244,13 @@ jobs:
           ./gradlew :conscrypt-openjdk-uber:publishToMavenLocal -Dorg.conscrypt.openjdk.buildUberJar=true -Dmaven.repo.local="$M2_REPO"
 
       - name: Upload Maven respository
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: m2repo-uber
           path: ${{ runner.temp }}/m2
 
       - name: Publish UberJAR to GitHubPackages
+        if: github.event_name == 'push'
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -249,7 +263,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ubuntu-latest, macos-latest]
+        platform: [ubuntu-22.04, macos-15-intel]
         java: [11]
         include:
           - java: 11
@@ -261,18 +275,19 @@ jobs:
 
     steps:
       - name: Set up Java
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v4
         with:
+          distribution: temurin
           java-version: ${{ matrix.java }}
 
       - name: Download UberJAR
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: m2repo-uber
           path: m2
 
       - name: Download Test JAR with Dependencies
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: testjar
           path: testjar
@@ -291,7 +306,7 @@ jobs:
 
       - name: Archive test results
         if: ${{ always() }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: test-results-${{ matrix.platform }}-${{ matrix.java }}
           path: results
