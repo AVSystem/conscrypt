@@ -7,6 +7,14 @@ buildscript {
     repositories {
         google()
         jcenter()
+
+        // Grgit 3.1.1 was published to JCenter; its maintainer hosts the archived artifacts here.
+        maven {
+            url = uri('https://ajoberstar.org/bintray-backup/')
+            content {
+                includeGroup 'org.ajoberstar.grgit'
+            }
+        }
     }
     dependencies {
         // This must be applied in the root project otherwise each subproject will
