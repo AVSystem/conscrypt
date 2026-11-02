@@ -90,6 +90,20 @@ if (buildUberJar) {
         artifact javadocJar
         artifact jar
     }
+
+    def publication = publishing.publications.gpr
+    def generatePomProperties = tasks.register("generatePomProperties", WriteProperties) {
+        property("groupId", publication.groupId)
+        property("artifactId", publication.artifactId)
+        property("version", publication.version)
+        outputFile "${buildDir}/generated/maven/pom.properties"
+    }
+
+    tasks.named("jar").configure {
+        from(generatePomProperties) {
+            into "META-INF/maven/${publication.groupId}/${publication.artifactId}"
+        }
+    }
 } else {
     // Not building an uber jar - disable all tasks.
     tasks.configureEach {

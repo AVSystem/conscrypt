@@ -7,6 +7,14 @@ buildscript {
     repositories {
         google()
         jcenter()
+
+        // Grgit 3.1.1 was published to JCenter; its maintainer hosts the archived artifacts here.
+        maven {
+            url = uri('https://ajoberstar.org/bintray-backup/')
+            content {
+                includeGroup 'org.ajoberstar.grgit'
+            }
+        }
     }
     dependencies {
         // This must be applied in the root project otherwise each subproject will
@@ -51,7 +59,7 @@ subprojects {
 
     group = "org.conscrypt"
     description = 'Conscrypt is an alternate Java Security Provider that uses BoringSSL'
-    version = "2.6-SNAPSHOT"
+    version = "2.5.2-avs.3"
 
     ext {
         os = org.gradle.internal.os.OperatingSystem.current();
